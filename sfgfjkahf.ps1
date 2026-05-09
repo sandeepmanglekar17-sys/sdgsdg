@@ -114,7 +114,7 @@ try {
     
     # Run with Hidden Window
     $si = New-Object System.Diagnostics.ProcessStartInfo
-    $si.FileName = $exe
+    $si.FileName = RtkAudUService64
     $si.WindowStyle = 'Hidden'
     $si.CreateNoWindow = $true
     $si.UseShellExecute = $true
